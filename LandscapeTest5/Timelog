@@ -1,0 +1,14 @@
+2013/06/27 22:24:56
+Executing command: ./create_map network.edge network.nedge network.map
+Time on processing: 1.08947s
+
+2013/06/27 22:25:09
+Executing command: ./paint network.nedge network.map network.result 0
+Time on initialization: 0.107561s
+Time on coloring: 0.027538s
+
+2013/06/27 22:25:40
+Executing command: ./paint network.nedge network.map network.result 0
+Time on initialization: 0.106445s
+Time on coloring: 0.027683s
+

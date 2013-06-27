@@ -80,13 +80,27 @@ void create_maps( string infilename, string outfilename1, string outfilename2 )
   cout<<"Processing completed in "<<((double)(clock()) - start)/1000000<<"s"<<endl;
 }
 
+string getTime()
+{
+  char outTime[64];
+  time_t t = time(0);
+  strftime(outTime, sizeof(outTime), "%Y/%m/%d %X", localtime(&t));
+  return outTime; 
+}
+
 int main(int argc, char** argv) {
   if ( argc != 4 ) {
     cerr<<"Wrong arguments. [.edge] [.nedge] [.map]"<<endl;
     exit(-1);
   }
-  //  clock_t start = clock();
+  clock_t start = clock();
+  ofstream logfile;
+  logfile.open("Timelog",ios::out | ios::app);
+  logfile<<getTime()<<endl;
+  logfile<<"Executing command: "<<argv[0]<<" "<<argv[1]<<" "<<argv[2]<<" "<<argv[3]<<endl;
   create_maps(argv[1],argv[2],argv[3]);
+  logfile<<"Time on processing: "<<((double)clock() - start)/1000000<<"s"<<endl<<endl;
+  logfile.close();
   for (int i = 0; i < N; i++){
     delete [] visited[i];
   }

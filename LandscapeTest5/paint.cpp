@@ -6,6 +6,7 @@
 #include<algorithm>
 #include<cstdlib>
 #include<set>
+#include<time.h>
 #include<string>
 #include<iomanip>
 #include<stdio.h>
@@ -185,6 +186,13 @@ void output(string filename)
   outfile.close();
 }
 
+string getTime()
+{
+  char outTime[64];
+  time_t t = time(0);
+  strftime(outTime, sizeof(outTime), "%Y/%m/%d %X", localtime(&t));
+  return outTime; 
+}
 
 int main(int argc, char** argv)
 {
@@ -192,14 +200,20 @@ int main(int argc, char** argv)
     cerr<<"Wrong input arguments. [.nedge] [.map] [.result] [level 0 for all]"<<endl;
     exit( -1 );
   }
+  ofstream logfile;
+  logfile.open("Timelog",ios::out | ios::app);
   LEVEL = atoi( argv[4] );
   clock_t start = clock();
   init_network( argv[1], argv[2]);
   sort_user();
-  cout<<"Time on initialization: "<<((double)clock() - start)/1000000<<"s"<<endl;
+  logfile<<getTime()<<endl;
+  logfile<<"Executing command: "<<argv[0]<<" "<<argv[1]<<" "<<argv[2]<<" "<<argv[3]<<" "<<argv[4]<<endl;
+  logfile<<"Time on initialization: "<<((double)clock() - start)/1000000<<"s"<<endl;
   start = clock();
   paint();
-  cout<<"Time on coloring: "<<((double)clock() - start)/1000000<<"s"<<endl;
+  logfile<<"Time on coloring: "<<((double)clock() - start)/1000000<<"s"<<endl<<endl;
+  cout<<"Processing completed."<<endl;
+  logfile.close();
   output( argv[3] );
   clean();
   return 0;
