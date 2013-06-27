@@ -11,30 +11,29 @@
 #include<stdio.h>
 using namespace std;
 
-
 struct User{
-  int idx;
-  int* nlist;
-  int nsize;
+  unsigned int idx;
+  unsigned int* nlist;
+  unsigned int nsize;
   double h;
   int color;
-  int level;
+  unsigned int level;
 };
 
 struct Node{
-  int idx;
+  unsigned int idx;
   double h;
 };
 
-const int USERNUM = 10000;
-map<int, int> uimap;
-map<int, int> iumap;
+const unsigned int USERNUM = 1000000;
+map<unsigned int, unsigned int> uimap;
+map<unsigned int, unsigned int> iumap;
 unsigned int cnt = 0;
 
 User user[USERNUM];
 Node orderlist[USERNUM];
-
-int cursize[USERNUM];
+unsigned int LEVEL = 0;
+unsigned int cursize[USERNUM];
 void read_idmap( string infilename )
 {
   FILE* infile = fopen( infilename.c_str(), "r");
@@ -43,8 +42,8 @@ void read_idmap( string infilename )
     exit( -1 );
   }
   fscanf(infile, "%d", &cnt);
-  int i,u;
-  for (int k = 0; k < cnt; k++) {
+  unsigned int i,u;
+  for (unsigned int k = 0; k < cnt; k++) {
     fscanf(infile, "%d %d", &i, &u);
     uimap[u] = i;
     iumap[i] = u;
@@ -54,7 +53,7 @@ void read_idmap( string infilename )
 void set_h()
 {
   srand(0);
-  for (int i = 0; i < cnt; i++){
+  for (unsigned int i = 0; i < cnt; i++){
     user[i].h = -(float)(user[i].nsize)+ (float)(rand()%1000-500)/5000;
   }
 }
@@ -62,7 +61,7 @@ void set_h()
 void init_network( string edgefilename, string idmapfilename )
 {
   read_idmap( idmapfilename );
-  for (int i = 0; i < cnt; i++) {
+  for (unsigned int i = 0; i < cnt; i++) {
     user[i].idx = i;
     user[i].nsize = 0;
     user[i].color = -1;
@@ -70,24 +69,24 @@ void init_network( string edgefilename, string idmapfilename )
   }
   
   //get neighbor list size, set h
-  int ui,uj;
+  unsigned int ui,uj;
   FILE* instream = fopen( edgefilename.c_str(),"r" );
   while ( fscanf(instream, "%d %d", &ui, &uj)!= EOF ) {
     user[uimap[ui]].nsize++;
     user[uimap[uj]].nsize++;
   }
   fclose(instream);
-  for(int i = 0; i < cnt; i++) {
-    user[i].nlist = new int[user[i].nsize];
+  for(unsigned int i = 0; i < cnt; i++) {
+    user[i].nlist = new unsigned int[user[i].nsize];
   }
   set_h();
   user[4].h = user[10].h + 0.01;
   user[20].h = user[18].h + 0.01;
   
   //create neighbor list
-  memset(cursize, 0, sizeof(int)*cnt);
+  memset(cursize, 0, sizeof(unsigned int)*cnt);
   instream = fopen( edgefilename.c_str(),"r" );
-  int i,j;
+  unsigned int i,j;
   while ( fscanf(instream, "%d %d", &ui, &uj)!= EOF ) {
     i = uimap[ui];
     j = uimap[uj];
@@ -101,7 +100,7 @@ void init_network( string edgefilename, string idmapfilename )
 
 void clean()
 {
-  for (int i = 0; i < cnt; i++){
+  for (unsigned int i = 0; i < cnt; i++){
     delete [] user[i].nlist;
   }
 }
@@ -115,7 +114,7 @@ bool comph( const Node &a, const Node &b)
 
 void sort_user()
 {
-  for (int i = 0; i < cnt; i++){
+  for (unsigned int i = 0; i < cnt; i++){
     orderlist[i].idx = i;
     orderlist[i].h = user[i].h;
   }
@@ -126,19 +125,19 @@ void sort_user()
 
 void paint()
 {
-  int level = 0;
+  unsigned int level = 0;
   bool finish = false;
-  int cur = 0;
-  while ( !finish ){
-    for (int i = 0; i < cnt; i++){
-      int idx = orderlist[i].idx;
+  unsigned int cur = 0;
+  while (!finish){
+    for (unsigned int i = 0; i < cnt; i++){
+      unsigned int idx = orderlist[i].idx;
       if( user[idx].color != -1 ) {
 	continue;
       }
       
 
       //empty
-      int j = 0;
+      unsigned int j = 0;
       for (; j < user[idx].nsize; j++){
 	if ( user[user[idx].nlist[j]].h< user[idx].h 
 	     && user[user[idx].nlist[j]].level >= level) {
@@ -176,43 +175,40 @@ void paint()
       }
     }
     level++;
-    if ( cur == cnt) finish = true;
-      
+    if ( LEVEL == 0 && cnt == cur) {
+      finish = true;
+    } else if ( LEVEL != 0 && level == LEVEL + 1 ) {
+      finish = true;
+    }
+        
   }
 }
 
-void output()
+void output(string filename)
 {
-  for (int i = 0; i < cnt; i++){
-    cout<<setw(8)<<iumap[i]<<setw(8)<<user[i].color<<setw(8)<<user[i].level<<endl;
+  ofstream outfile( filename.c_str() );
+  for (unsigned int i = 0; i < cnt; i++){
+    outfile<<setw(8)<<iumap[i]<<setw(8)<<user[i].color<<setw(8)<<user[i].level<<endl;
   }
+  outfile.close();
 }
 
 
-int main()
+int main(int argc, char** argv)
 {
+  if ( argc != 5 ) {
+    cerr<<"Wrong input arguments. [.edge] [.idmap] [.result] [level 0 for all]"<<endl;
+    exit( -1 );
+  }
+  LEVEL = atoi( argv[4] );
   clock_t start = clock();
-  init_network( "network.edge", "network.idmap");
+  init_network( argv[1], argv[2]);
   sort_user();
-  //cout<<clock() - start<<endl;
+  cout<<"Time on initialization: "<<((double)clock() - start)/1000000<<"s"<<endl;
   start = clock();
-
-  // for (int i = 0; i < cnt; i++){
-  //   cout<<iumap[i]<<" ";
-  //   for (int j = 0; j < user[i].nsize; j++){
-  //     cout<<setw(4)<<user[i].nlist[j];
-  //   }
-  //   cout<<endl;
-  // }
-  // for(int i = 0; i < cnt; i++){
-  //   cout<<user[i].h<<endl;
-  // }
-  // for (int i = 0;i < cnt;i++){
-  // cout<<orderlist[i].idx<<endl;
-  //}
   paint();
-  //cout<<clock() - start<<endl;
-  output();
+  cout<<"Time on coloring: "<<((double)clock() - start)/1000000<<"s"<<endl;
+  output( argv[3] );
   clean();
   return 0;
 }
